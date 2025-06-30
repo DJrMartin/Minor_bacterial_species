@@ -38,4 +38,4 @@ If you use this resource in your research, please cite it as:
 
 For questions, feedback, or collaboration opportunities, please contact:\
 **David Martin (PhD)** -- *University of Rennes*\
-[[david.martin.2\@univ-rennes.fr](mailto:david.martin.2@univ-rennes.fr){.email}]
+[[david.martin.2\@univ-rennes.fr](mailto:david.martin.2@univ-rennes.fr)]
