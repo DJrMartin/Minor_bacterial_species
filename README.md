@@ -2,7 +2,7 @@
 
 The microbiome is a rich source of biological data that offers promising insights into personalized medicine. However, inferring host health fromgut bacterial composition using statistical analytical methods remains a challenge. Here, we show that groups of bacterial species with high abundance and variance (referred to as dominant bacterial species and often associated with enterotypes) exert a disproportionately large influence on microbiome analyses, hiding the contribution of less expressed species (referred to as minor bacterial species). To address this limitation, we propose a guided data transformation highlighting minor bacterial species while minimizing the impact of dominant bacterial species on microbiome statistical analyses. This transformation (i) leads to alternative clustering more closely associated with host health and (ii) helps to improve the performance of supervised machine learning algorithms in high-dimensional settings (𝒏 ≪ 𝒑). Applying to a real dataset, our results suggest that enterotypes may act as a confounding variable to predict host health.
 
-This repository provides data and simulated data, as well as the R scripts used to realise the figures and the experiments
+This repository provides data and simulated data, as well as the R scripts used to realise the figures and the experiments.
 
 ## Installation
 
