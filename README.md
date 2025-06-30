@@ -6,12 +6,12 @@ This repository provides data and simulated data, as well as the R scripts used 
 
 ## Installation
 
-git clone <https://github.com/ton-nom-utilisateur/NomDuProjet.git>
+git clone <https://github.com/DJrMartin/Minor_bacterial_species.git>
 
 Developed in **R**. Required packages:
 
 ``` r
-install.packages(c("stringr" , "FactoMineR" , "prospectr", "fda", "randomForest", "caret"))
+install.packages(c("randomForest" , "vegan" , "caret"))
 ```
 
 ## Repository structure
