@@ -65,54 +65,69 @@ axis(2)
 ### data
 x_clr <- compositions::clr(X)
 x_PA <- X>0
-R.coda <- lm(as.matrix(X)~as.factor(Z1))$residuals
-R.clr <- lm(as.matrix(x_clr)~as.factor(Z1))$residuals
-R.PA <- lm(as.matrix(X>0)~as.factor(Z1))$residuals
 
-residuals.coda=residuals.clr=residuals.PA=clr=coda=PA=NULL
-residuals.s.coda=residuals.s.clr=residuals.s.PA=clr.s=coda.s=PA.s=NULL
+residuals.coda = residuals.clr = residuals.PA = clr = coda = PA = NULL
+residuals.s.coda = residuals.s.clr = residuals.s.PA = clr.s = coda.s = PA.s = NULL
 spe.coda = spe.PA = spe.r.PA = spe.r.coda = NULL
 
 for(i in 1:50){
   intraining <- caret::createDataPartition(Y, p=0.8)$Resample1
+  
+  train = X[intraining,]
+  test = X[-intraining,]
+  bray_curtis <- vegan::vegdist(train) # Bray Curtis (dis)similarity
+  Z <- as.factor(cutree(hclust(bray_curtis, method = "ward.D"), 2)) # Enterotype
+  rf_ent <- randomForest(Z~., train)
+  Z_train = Z
+  Z_test = predict(rf_ent, test)
+  
+  R.coda = R.clr = R.PA = matrix(NA, nrow = nrow(x_clr), ncol = ncol(x_clr))
+  for(j in levels(Z)){
+    M_1 <- colMeans(X[intraining,][Z_train=="1",])
+    M_2 <- colMeans(X[intraining,][Z_train=="2",])
+    R.coda[intraining,][Z_train=="1",] = scale(X[intraining,][Z_train=="1",], center = M_1, scale = F)
+    R.coda[intraining,][Z_train=="2",] = scale(X[intraining,][Z_train=="2",], center = M_2, scale = F)
+    R.coda[-intraining,][Z_test=="1",] = scale(X[-intraining,][Z_test=="1",], center = M_1, scale = F)
+    R.coda[-intraining,][Z_test=="2",] = scale(X[-intraining,][Z_test=="2",], center = M_2, scale = F)
+  }
+  
   #coda
-  rf = randomForest::randomForest(Y[intraining]~., data=X[intraining,])
+  rf = randomForest::randomForest(Y[intraining]~., data = X[intraining,])
   coda <- c(coda, pROC::auc(Y[-intraining],predict(rf, X[-intraining,], type="prob")[,1], direction=">"))
   w <- which(rf$importance!=0)
   coda.s <- c(coda.s, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
   spe.coda = cbind(spe.coda, rf$importance[,1])
   
   #clr
-  rf = randomForest::randomForest(Y[intraining]~., data=x_clr[intraining,])
-  clr <- c(clr, pROC::auc(Y[-intraining],predict(rf, x_clr[-intraining,], type="prob")[,1], direction=">"))
-  w <- which(rf$importance!=0)
-  clr.s <- c(clr.s, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
-  
-  #PA
-  rf = randomForest::randomForest(Y[intraining]~., data=x_PA[intraining,])
-  PA <- c(PA, pROC::auc(Y[-intraining],predict(rf, x_PA[-intraining,], type="prob")[,1], direction=">"))
-  w <- which(rf$importance!=0)
-  PA.s <- c(PA.s, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
-  
-  spe.PA = cbind(spe.PA, rf$importance[,1])
+  # rf = randomForest::randomForest(Y[intraining]~., data=x_clr[intraining,])
+  # clr <- c(clr, pROC::auc(Y[-intraining],predict(rf, x_clr[-intraining,], type="prob")[,1], direction=">"))
+  # w <- which(rf$importance!=0)
+  # clr.s <- c(clr.s, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
+  # 
+  # #PA
+  # rf = randomForest::randomForest(Y[intraining]~., data=x_PA[intraining,])
+  # PA <- c(PA, pROC::auc(Y[-intraining],predict(rf, x_PA[-intraining,], type="prob")[,1], direction=">"))
+  # w <- which(rf$importance!=0)
+  # PA.s <- c(PA.s, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
+  # spe.PA = cbind(spe.PA, rf$importance[,1])
   
   #r
   rf = randomForest::randomForest(Y[intraining]~., data=R.coda[intraining,])
-  residuals.coda <- c(residuals.coda, pROC::auc(Y[-intraining],predict(rf, R.coda[-intraining,], type="prob")[,1], direction=">"))
+  residuals.coda <- c(residuals.coda, pROC::auc(Y[-intraining], predict(rf, R.coda[-intraining,], type="prob")[,1], direction=">"))
   w <- which(rf$importance!=0)
   residuals.s.coda <- c(residuals.s.coda, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
   spe.r.coda = cbind(spe.r.coda, rf$importance[,1])
   
-  rf = randomForest::randomForest(Y[intraining]~., data=R.clr[intraining,])
-  residuals.clr <- c(residuals.clr, pROC::auc(Y[-intraining],predict(rf, R.clr[-intraining,], type="prob")[,1], direction=">"))
-  w <- which(rf$importance!=0)
-  residuals.s.clr <- c(residuals.s.clr, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
-  
-  rf = randomForest::randomForest(Y[intraining]~., data=R.PA[intraining,])
-  residuals.PA <- c(residuals.PA, pROC::auc(Y[-intraining],predict(rf, R.PA[-intraining,], type="prob")[,1], direction=">"))
-  w <- which(rf$importance!=0)
-  residuals.s.PA <- c(residuals.s.PA, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
-  spe.r.PA = cbind(spe.r.PA, rf$importance[,1])
+  # rf = randomForest::randomForest(Y[intraining]~., data=R.clr[intraining,])
+  # residuals.clr <- c(residuals.clr, pROC::auc(Y[-intraining],predict(rf, R.clr[-intraining,], type="prob")[,1], direction=">"))
+  # w <- which(rf$importance!=0)
+  # residuals.s.clr <- c(residuals.s.clr, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
+  # 
+  # rf = randomForest::randomForest(Y[intraining]~., data=R.PA[intraining,])
+  # residuals.PA <- c(residuals.PA, pROC::auc(Y[-intraining],predict(rf, R.PA[-intraining,], type="prob")[,1], direction=">"))
+  # w <- which(rf$importance!=0)
+  # residuals.s.PA <- c(residuals.s.PA, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
+  # spe.r.PA = cbind(spe.r.PA, rf$importance[,1])
   
   
   print(i)
@@ -125,13 +140,15 @@ color = rep(NA, 6)
 color[seq(1,5,by=2)] = LaCroixColoR::lacroix_palette(type = "paired")[seq(2,6,by=2)]
 color[seq(2,6,by=2)] = LaCroixColoR::lacroix_palette(type = "paired")[seq(1,5,by=2)]
 
-boxplot(coda,residuals.coda, PA,residuals.PA, clr,residuals.clr, col=color, ylim=c(0,1.1), 
+boxplot(coda, residuals.coda, PA, residuals.PA, clr, residuals.clr, col=color, ylim=c(0,1.1), 
         axes=F, ylab="AUROC")
+t.test(coda, residuals.coda)
 abline(h=0.5, lty=2)
 text(c(2,4,6),1.05, "a", cex=1)
 axis(1, at=c(1.5,3.5,5.5),labels =rep('',3) )
 text(c(1.5,3.5,5.5), y=rep(-0.22,4), c('Rel. Ab.',"Abs./pres.","CLR"), cex=0.8, srt=45, xpd=NA, pos=3)
 axis(2, at=c(0.5,0.6, 0.7, 0.8, 0.9,1))
+
 
 par(mar=c(4,5,2,2))
 boxplot(coda.s,residuals.s.coda, PA.s,residuals.s.PA,clr.s,residuals.s.clr, col=color, ylim=c(0,0.7), 
