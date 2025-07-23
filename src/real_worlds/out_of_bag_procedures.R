@@ -25,5 +25,5 @@ X <- as.data.frame(t(apply(data$`Wu et al.`[,-c(1:4)], 1, function(x) x/sum(x)))
 Y <- as.factor(data$`Wu et al.`$group)
 
 res.wu = out_of_bag_prediction(X, Y, cv = 20)
-# boxplot(res.wu$X, res.wu$R) ; t.test(res.wu$X, res.wu$R)
+boxplot(res.wu$X, res.wu$R) ; t.test(res.wu$X, res.wu$R)
 #==================================================================================
