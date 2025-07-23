@@ -129,7 +129,6 @@ for(i in 1:50){
   # residuals.s.PA <- c(residuals.s.PA, summary(lm(log(rf$importance[w])~log(colMeans(X))[w]))$r.squared)
   # spe.r.PA = cbind(spe.r.PA, rf$importance[,1])
   
-  
   print(i)
 }
 
