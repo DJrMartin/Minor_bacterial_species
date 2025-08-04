@@ -1,7 +1,7 @@
 library(randomForest)
 library(pROC)
 
-out_of_bag_prediction <- function(X, Y, cv = 30){
+out_of_bag_prediction <- function(X, Y, cv = 30, ntree = 1500, maxnodes = 5, D = "bray", k = 2){
   res_R = res_X = NULL
   # cross validation
   for(cv in 1:cv){
@@ -12,11 +12,16 @@ out_of_bag_prediction <- function(X, Y, cv = 30){
    
     y_train = Y[intraining]
     y_test = Y[-intraining]
-    
-    # Bray Curtis (dis)similarity
-    bray_curtis <- vegan::vegdist(train) 
-    # Enterotype of the samples included in the train group
-    Z_train <- as.factor(cutree(hclust(bray_curtis, method = "ward.D"), 2)) 
+    if(D == "bray"){# Bray Curtis (dis)similarity
+      bray_curtis <- vegan::vegdist(train) 
+      # Enterotype of the samples included in the train group
+      Z_train <- as.factor(cutree(hclust(bray_curtis, method = "ward.D"), k))
+    }
+    if(D != "bray"){
+      bray_curtis <- dist(train) 
+      # Enterotype of the samples included in the train group
+      Z_train <- as.factor(cutree(hclust(bray_curtis, method = "ward.D"), k))
+    }
     
     # Prediction of the enterotypes from microbiome composition.
     rf_ent <- randomForest(Z_train ~ ., train)
@@ -38,7 +43,7 @@ out_of_bag_prediction <- function(X, Y, cv = 30){
     }
     
     # Prediction of Y from X
-    rf_X = randomForest::randomForest(y_train~., data = train)
+    rf_X = randomForest::randomForest(y_train~., data = train, ntree = ntree, maxnodes = maxnodes)
     res_X <- c(res_X, auc(y_test, predict(rf_X, test, type="prob")[,1], direction=">"))
     
     # Prediction on Y from Residuals
@@ -46,7 +51,7 @@ out_of_bag_prediction <- function(X, Y, cv = 30){
     res_R <- c(res_R, auc(y_test, predict(rf_R, residuals.X[-intraining,], type="prob")[,1], direction=">"))
   
   }
-  # return the resutls.
-  return(list(X = res_X, R = res_R))
   
+  # return the resutls.
+  return(list(X = res_X, R = res_R, residual.data = residuals.X))
 }

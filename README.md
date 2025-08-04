@@ -24,9 +24,8 @@ install.packages(c("randomForest" , "vegan" , "caret"))
     -   `real_world/` provides the scripts to reproduce the analyses of the real-world data-sets (Figures 4, 5 and S3). Notably, out_of_bag_procedures.R is the simplest script describing the procedures realized to obtain Figures 4 and 5.
     -   `simulation_validation/` provides the script to reproduce Figures S4 and S5.
 
-```{=html}
 <!-- -->
-```
+
 -   `functions/`: provides the script for the out_of_bag procedures for machine learning algorithms.
 
 ## License
