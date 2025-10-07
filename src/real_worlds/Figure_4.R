@@ -1,11 +1,8 @@
 rm(list=ls())
-## IMPORTATIONS========================================
-library(vegan)
-library(ape)
-library(dendextend)
-library(SIBER)
-library(cluster)
-library(randomForest)
+
+### Packages.
+packages <- readLines("requirements")
+invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 ### data ================
 load("data/data.rda")

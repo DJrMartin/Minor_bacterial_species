@@ -1,9 +1,4 @@
 rm(list=ls())
-library(ape)
-library(vegan)
-library(yarrr)
-library(readxl)
-library(cluster)
 
 ### data ================
 load("data/data.rda")

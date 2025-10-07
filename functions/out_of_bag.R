@@ -2,7 +2,7 @@ library(randomForest)
 library(pROC)
 
 out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NULL, cv = 20, ntree = 1500, 
-                                  maxnodes = 5, distance = "bray", k = 2, p = 0.7){
+                                  maxnodes = 5, mtry = 5, distance = "bray", k = 2, p = 0.7){
   res_R = res_X = NULL
   res.imp.R = res.imp.X = NULL
   # cross validation
@@ -47,10 +47,10 @@ out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NUL
     
     # PREDICTION
     # Prediction of Y from X
-    rf_X = randomForest::randomForest(y_train~., data = X_transformed[intraining,], ntree = ntree, maxnodes = maxnodes)
+    rf_X = randomForest::randomForest(y_train~., data = X_transformed[intraining,], ntree = ntree, maxnodes = maxnodes, mtry = mtry)
     res_X <- c(res_X, auc(y_test, predict(rf_X, X_transformed[-intraining,], type="prob")[,1], direction=">"))
     # Prediction on Y from Residuals
-    rf_R = randomForest::randomForest(y_train~., data=residuals.X[intraining,])
+    rf_R = randomForest::randomForest(y_train~., data=residuals.X[intraining,], ntree = ntree, maxnodes = maxnodes, mtry = mtry)
     res_R <- c(res_R, auc(y_test, predict(rf_R, residuals.X[-intraining,], type="prob")[,1], direction=">"))
   
     # IMPORTANCE

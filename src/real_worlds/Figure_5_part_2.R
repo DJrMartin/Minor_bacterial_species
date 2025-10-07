@@ -1,10 +1,4 @@
 rm(list=ls())
-library(ape)
-library(vegan)
-library(yarrr)
-library(readxl)
-library(randomForest)
-
 ### data ================
 load("data/data.rda")
 
@@ -34,7 +28,7 @@ length(which(is.na(genus)))/length(genus)
 tss.genus <- tss_data 
 colnames(tss.genus)=genus
 
-tss.G=NULL
+tss.G = NULL
 for (i in unique(genus)){
   tss.G=cbind(tss.G,apply(as.matrix(tss_data[,which(genus==i)]), 1, sum))
 }
@@ -44,7 +38,7 @@ tss.G <- data.frame(tss.G)
 ### Out-of-sampling
 n <- nrow(tss_data)
 p <- ncol(tss_data)
-k=3
+k = 3
 n.CV <- 20
 
 roc.r = roc.CoDa = c()
@@ -69,8 +63,8 @@ for(i in 1:n.CV){
     TEST.R[which(k_est[-intraining]==j),]=scale(TEST[which(k_est[-intraining]==j),],
                                                 center = model$coefficients[1,], scale=F)
   }
-  rf.r <- randomForest(curated.class[intraining]~., TRAIN.R, maxnodes = 5, mtry=20, ntree=2000)
-  rf.CoDa <- randomForest(curated.class[intraining]~., TRAIN, maxnodes = 5, mtry=20, ntree=2000)
+  rf.r <- randomForest(curated.class[intraining]~., TRAIN.R, maxnodes = 5, mtry = 20, ntree = 2000)
+  rf.CoDa <- randomForest(curated.class[intraining]~., TRAIN, maxnodes = 5, mtry = 20, ntree = 2000)
   
   imp.r <- cbind(imp.r, rf.r$importance)
   imp.coda <- cbind(imp.coda, rf.CoDa$importance)

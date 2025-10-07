@@ -6,8 +6,8 @@ library(caret)
 library(randomForest)
 
 ## Data 
-load("~/Desktop/for_github/data.rda")
-load("~/Desktop/for_github/Simulation.RDATA")
+load("data/data.rda")
+load("data/Simulation.RDATA")
 
 NB_data.simulated = 40 # Nomber of simulated data for each method
 X_ref <- data.frame(t(apply(data$PRJEB1220$count, 2, function(x) x/sum(x))))
