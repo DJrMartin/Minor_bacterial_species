@@ -1,11 +1,8 @@
 rm(list=ls())
-library(caret)
-library(gbm)
-library(randomForest)
-library(e1071)
-library("MLmetrics")
-library(compositions)
-library(yarrr)
+
+### Packages.
+packages <- readLines("requirements.txt")
+invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 ### FOR DISTINCT PREPROCESS
 # Preprocess =========================

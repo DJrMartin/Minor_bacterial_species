@@ -1,7 +1,7 @@
 rm(list=ls())
 
 ### Packages.
-packages <- readLines("requirements")
+packages <- readLines("requirements.txt")
 invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 ### data ================
@@ -65,11 +65,11 @@ x_PA <- X>0
 
 source("functions/out_of_bag.R")
 set.seed(2)
-res.clr = out_of_bag_prediction(X, Y, transformed = TRUE, X_transformed = x_clr, cv = 20)
+res.clr = out_of_bag_prediction(X, Y, transformed = TRUE, X_transformed = x_clr, cv = 10)
 set.seed(2)
-res.PA = out_of_bag_prediction(X, Y, transformed = TRUE, X_transformed = x_PA, cv = 20)
+res.PA = out_of_bag_prediction(X, Y, transformed = TRUE, X_transformed = x_PA, cv = 10)
 set.seed(2)
-res.X = out_of_bag_prediction(as.matrix(X), Y, cv = 20)
+res.X = out_of_bag_prediction(as.matrix(X), Y, cv = 10)
 
 layout(matrix(c(1,2), nrow = 1))
 par(mar=c(4,4,2,2))

@@ -1,9 +1,9 @@
 rm(list=ls())
+rm(list=ls())
 
-## Library
-library(yarrr)
-library(caret)
-library(randomForest)
+### Packages.
+packages <- readLines("requirements.txt")
+invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 ## Data 
 load("data/data.rda")

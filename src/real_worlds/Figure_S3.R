@@ -1,11 +1,8 @@
 rm(list=ls())
-library(SIBER)
-library(ape)
-library(tidyverse)
-library(vegan)
-library(dendextend)
-library(cluster)
-library(mclust)
+
+### Packages.
+packages <- readLines("requirements.txt")
+invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 ### data ================
 load("data/data.rda")

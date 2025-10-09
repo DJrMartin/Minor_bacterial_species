@@ -6,3 +6,6 @@ yarrr
 cluster
 pROC
 readxl
+compositions
+gbm
+picante

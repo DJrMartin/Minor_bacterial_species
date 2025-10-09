@@ -1,4 +1,8 @@
 rm(list=ls())
+
+### Packages.
+packages <- readLines("requirements")
+invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 ### data ================
 load("data/data.rda")
 

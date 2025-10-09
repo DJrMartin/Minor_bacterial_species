@@ -1,10 +1,8 @@
 rm(list=ls())
-# DATA =========================
-library(compositions)
-library(randomForest)
-library(SIBER)
-library(yarrr)
-library(FactoMineR)
+
+### Packages.
+packages <- readLines("requirements.txt")
+invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 load("data/Simulation.RDATA")
 load("data/data.rda")

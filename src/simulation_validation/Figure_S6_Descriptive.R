@@ -1,7 +1,9 @@
 rm(list=ls())
 
-## Library
-library(yarrr)
+### Packages.
+packages <- readLines("requirements.txt")
+invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
+
 ## Data 
 load("data/data.rda")
 load("data/Simulation.RDATA")

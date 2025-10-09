@@ -1,8 +1,9 @@
 library(randomForest)
 library(pROC)
 
-out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NULL, cv = 20, ntree = 1500, 
-                                  maxnodes = 5, mtry = 5, distance = "bray", k = 2, p = 0.7){
+out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NULL, cv = 10, ntree = 2000, 
+                                  maxnodes = 5, mtry = 25, distance = "bray", k = 2, p = 0.7){
+  
   res_R = res_X = NULL
   res.imp.R = res.imp.X = NULL
   # cross validation
@@ -48,11 +49,26 @@ out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NUL
     # PREDICTION
     # Prediction of Y from X
     rf_X = randomForest::randomForest(y_train~., data = X_transformed[intraining,], ntree = ntree, maxnodes = maxnodes, mtry = mtry)
-    res_X <- c(res_X, auc(y_test, predict(rf_X, X_transformed[-intraining,], type="prob")[,1], direction=">"))
+    ## predictions
+    pred.X.threshold <- predict(rf_X, X_transformed[-intraining,])
+    pred.X <- predict(rf_X, X_transformed[-intraining,], type="prob")[,1]
+    ## other metrics for X.
+    metrics.X <- caret::confusionMatrix(pred.X.threshold, y_test, mode = "everything")
+    metrics.X <- c(metrics.X$overall[1], metrics.X$byClass[c(1,2,7)], cor(as.numeric(y_test), as.numeric(pred.X.threshold)))
+    ## AUROC for X.
+    res_X <- rbind(res_X, c(auc(y_test, pred.X), metrics.X))
+    
     # Prediction on Y from Residuals
     rf_R = randomForest::randomForest(y_train~., data=residuals.X[intraining,], ntree = ntree, maxnodes = maxnodes, mtry = mtry)
-    res_R <- c(res_R, auc(y_test, predict(rf_R, residuals.X[-intraining,], type="prob")[,1], direction=">"))
-  
+    ## predictions
+    pred.R <- predict(rf_R, residuals.X[-intraining,], type="prob")[,1]
+    pred.R.threshold <- predict(rf_R, residuals.X[-intraining,])
+    ## other metrics for r.
+    metrics.R <- caret::confusionMatrix(pred.R.threshold, y_test,  mode = "everything")
+    metrics.R <- c(metrics.R$overall[1], metrics.R$byClass[c(1,2,7)], cor(as.numeric(y_test), as.numeric(pred.R.threshold)))
+    ## AUROC for r.
+    res_R <- rbind(res_R, c(auc(y_test, pred.R), metrics.R))
+    
     # IMPORTANCE
     # Importance in X or X_transformed
     w <- which(rf_X$importance!=0)
@@ -60,7 +76,6 @@ out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NUL
     # Importance in residuals
     w <- which(rf_R$importance!=0)
     res.imp.R <- c(res.imp.R, summary(lm(log(rf_R$importance[w])~log(colMeans(X))[w]))$r.squared)
-  
   }
   
   # return the resutls.
