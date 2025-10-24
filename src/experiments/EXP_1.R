@@ -119,6 +119,7 @@ for(nb in 1:50){
     rf <- randomForest::randomForest(as.factor(k_r)~.,data.frame(coda.train))
     spe.r = c(spe.r, mean(as.numeric(log(colMeans(coda.train))[names(sort(rf$importance[,1], decreasing = T))[1:20]])))
   }
+  
   res.coda <- rbind(res.coda, c(p.coda))
   res.residuals <- rbind(res.residuals, c(p.r))
   res.clr <- rbind(res.clr, c(p.clr))

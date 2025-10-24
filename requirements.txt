@@ -9,3 +9,6 @@ readxl
 compositions
 gbm
 picante
+SIBER
+glmnet
+pls

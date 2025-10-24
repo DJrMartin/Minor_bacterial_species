@@ -1,7 +1,7 @@
 rm(list=ls())
 
 ### Packages.
-packages <- readLines("requirements")
+packages <- readLines("requirements.txt")
 invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 ######## TESTS
