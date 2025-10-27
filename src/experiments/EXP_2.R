@@ -6,31 +6,31 @@ invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 
 load("data/Simulation.RDATA")
 load("data/data.rda")
+
 # Preprocess =========================
 X = data.frame(t(data$PRJEB1220$count))
 BC <- vegan::vegdist(X) # BC
 X.clr <- clr(X) # CLR transformation
 
-# # Enterotype estimation =========================
-# # Z_1 <- as.numeric(cutree(hclust(BC, method = "ward.D"), 2)) 
+# Enterotype estimation =========================
 Z_for_R <- as.numeric(cutree(hclust(BC, method = "ward.D"), 3))
 # # Residuals estimation =========================
 R <- lm(as.matrix(X.clr)~as.factor(Z_for_R))$residuals # Calcul of the residuals.
 # Host physiology =========================
-Y <- as.factor(read.csv('~/microbiota/host_physiology.csv', row.names = 1)[,1])
+Y <- as.factor(data$PRJEB1220$data$disease)
 # Selection of the Y's support. =========================
 J <- which(apply(X, 2, var) > quantile(apply(X, 2, var), p=0.4))
 # Random Forest to compute Y' =========================
-# rf_1 = randomForest(as.factor(Z_1)~., X[,J])
 rf_2 = randomForest(as.factor(Y)~., R[,-J])
 
 ########################
 ####### PARTIE 2 ####### 
 ########################
-N = 299
+N = 75
 set.seed(1)
-res.coda = res.residuals = res.clr = res.PA  = NULL
-res.inter.coda = res.inter.clr = res.inter.r = res.inter.PA = NULL
+res.coda = res.residuals = res.clr = res.rclr = res.PA  = NULL
+res.inter.coda = res.inter.clr = res.inter.rclr = res.inter.r = res.inter.PA = NULL
+
 for(nb in 1:49){
   # nb=2
   # (A) Preprocess of the X' =========================
@@ -40,38 +40,44 @@ for(nb in 1:49){
   colnames(X.sim) <- colnames(X)
   
   # (B) Enterotype of X' =========================
-  Z_1 <- cutree(hclust(vegan::vegdist(X.sim), method = "ward.D2"), 2) # Clustering
+  Z_1 <- cutree(hclust(vegan::vegdist(X.sim), method = "ward.D"), 2) # Clustering
   prerequis <- length(which(Z_1==1))<length(which(Z_1==2))
   if(prerequis==TRUE){
     Z_1.corrected = Z_1
     Z_1[which(Z_1.corrected==1)]=2 ; Z_1[which(Z_1.corrected==2)]=1
   }
-  Z_1_R <- cutree(hclust(vegan::vegdist(X.sim), method = "ward.D2"), 3) # Clustering
+  Z_1_R <- cutree(hclust(vegan::vegdist(X.sim), method = "ward.D"), 3) # Clustering
   # plot(ape::pcoa(vegan::vegdist(X.sim))$vectors, col=as.factor(Z_1_R))
   
   # (C) Take a subsequent of the data.
   ech.train <- caret::createDataPartition(Z_1_R, p=N/400, list=F)
+  
   # TRAIN ==============
   entero.train = Z_1[ech.train]
+  
   coda.train <- X.sim[ech.train,] # Compositionnal data.
   PA.train <- X.sim[ech.train,]>0
   clr.train <- data.frame(clr(coda.train)) # CLR
-  Z_1_R <- cutree(hclust(vegan::vegdist(coda.train), method = "ward.D2"), 3) # Clustering
-  r.pred.train <- data.frame(lm(as.matrix(clr.train)~as.factor(Z_1_R))$residuals)
-  r.train <- data.frame(lm(as.matrix(PA.train)~as.factor(Z_1_R))$residuals)
+  rclr.train <- data.frame(decostand(coda.train, "rclr")) # r-CLR
+  
+  Z1_train <- cutree(hclust(vegan::vegdist(coda.train), method = "ward.D"), 3) # Clustering
+  
+  r.pred.train <- data.frame(lm(as.matrix(clr.train)~as.factor(Z1_train))$residuals)
+  r.train <- data.frame(lm(as.matrix(PA.train)~as.factor(Z1_train))$residuals)
   
   # TEST ==============
   ech.test <- as.numeric(names(sample(Z_1[-ech.train], 100)))+1
   entero.test = Z_1[ech.test]
+  
   coda.test <- X.sim[ech.test,] # Compositionnal data.
   PA.test <- X.sim[ech.test,]>0
   clr.test <- data.frame(clr(coda.test)) # CLR
-  Z1_test <- cutree(hclust(vegan::vegdist(coda.test), method = "ward.D2"), 3) # Clustering
+  rclr.test <- data.frame(decostand(coda.test, "rclr")) # r-CLR
+  
+  Z1_test <- cutree(hclust(vegan::vegdist(coda.test), method = "ward.D"), 3) # Clustering
+  
   r.pred.test <- data.frame(lm(as.matrix(clr.test)~as.factor(Z1_test))$residuals)
   r.test <- data.frame(lm(as.matrix(PA.test)~as.factor(Z1_test))$residuals) # Residuals
-  
-  # plot(ape::pcoa(vegan::vegdist(coda.test))$vectors, col=as.factor(Z1_test))
-  # plot(ape::pcoa(vegan::vegdist(coda.train))$vectors, col=as.factor(Z_1_R))
   
   ### REST OF THE ALGORITHMS
   p.coda = p.r = p.clr = p.PA  = NULL
@@ -95,12 +101,13 @@ for(nb in 1:49){
     rf_r <- randomForest(Y_sim.train~., r.train)
     rf_bray <- randomForest(Y_sim.train~., coda.train)
     rf_clr <- randomForest(Y_sim.train~., clr.train)
+    rf_rclr <- randomForest(Y_sim.train~., rclr.train)
     rf_PA <- randomForest(Y_sim.train~., PA.train)
 
     # (G) interpretability
-    # (G) interpretability
     spe.coda = c(spe.coda, mean(as.numeric(log(apply(coda.train, 2, var))[names(sort(rf_bray$importance[,1], decreasing = T))[1:20]])))
     spe.clr = c(spe.clr, mean(as.numeric(log(colMeans(coda.train))[names(sort(rf_clr$importance[,1], decreasing = T))[1:20]])))
+    spe.rclr = c(spe.rclr, mean(as.numeric(log(colMeans(coda.train))[names(sort(rf_rclr$importance[,1], decreasing = T))[1:20]])))
     spe.r = c(spe.r, mean(as.numeric(log(colMeans(coda.train))[names(sort(rf_r$importance[,1], decreasing = T))[1:20]])))
     spe.PA = c(spe.PA, mean(as.numeric(log(colMeans(coda.train))[names(sort(rf_PA$importance[,1], decreasing = T))[1:20]])))
     
@@ -108,21 +115,26 @@ for(nb in 1:49){
     p.r = c(p.r, pROC::auc(Y_sim.test, predict(rf_r, r.test, type='prob')[,2]))
     p.coda = c(p.coda, pROC::auc(Y_sim.test, predict(rf_bray, coda.test, type='prob')[,2]))
     p.clr = c(p.clr, pROC::auc(Y_sim.test, predict(rf_clr, clr.test, type='prob')[,2]))
+    p.rclr = c(p.rclr, pROC::auc(Y_sim.test, predict(rf_rclr, rclr.test, type='prob')[,2]))
     p.PA = c(p.PA, pROC::auc(Y_sim.test, predict(rf_PA, PA.test, type='prob')[,2]))
     
   }
   res.coda <- rbind(res.coda, c(p.coda))
   res.residuals <- rbind(res.residuals, c(p.r))
   res.clr <- rbind(res.clr, c(p.clr))
+  res.rclr <- rbind(res.rclr, c(p.rclr))
   res.PA <- rbind(res.PA, c(p.PA))
   
   res.inter.coda = rbind(res.inter.coda, c(spe.coda))
   res.inter.clr = rbind(res.inter.clr, c(spe.clr))
+  res.inter.rclr = rbind(res.inter.rclr, c(spe.rclr))
   res.inter.r = rbind(res.inter.r, c(spe.r))
   res.inter.PA = rbind(res.inter.PA, c(spe.PA))
 
   print(paste(nb, "done ! "))
 }
+save(res, file = "data/figure_3_exp2.rda")
+load(file = "data/figure_3_exp2.rda")
 
 layout(matrix(c(1,2), nrow = 1))
 par(mar=c(4,5,2,2))

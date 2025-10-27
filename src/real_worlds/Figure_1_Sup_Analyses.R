@@ -78,7 +78,7 @@ for(i in 1:length(DF)){
       if(i == 4){
         I <- gsub("TRUE", "", x = names(sort(as.matrix(importance_list[[m]]$importance)[,1], decreasing=T)[1:20])) 
       }else{I <- names(sort(as.matrix(importance_list[[m]]$importance)[,1], decreasing=T)[1:20])}
-      interpretability = cbind(interpretability, colMeans(x[,I]))
+      interpretability = cbind(interpretability, mean(colMeans(x[,I])))
     }
     
     res.interpretability = rbind(res.interpretability, interpretability)
@@ -90,7 +90,8 @@ for(i in 1:length(DF)){
   # Avancment of the analyses.
   print(paste("done", i))
 }
-
+# save(res, file = "data/figure_1.rda")
+load("data/figure_1.rda")
 color = LaCroixColoR::lacroix_palette(type = "paired")[c(2, 4, 6, 8, 12)]
 
 layout(matrix(c(1,2,3), nrow=1))
