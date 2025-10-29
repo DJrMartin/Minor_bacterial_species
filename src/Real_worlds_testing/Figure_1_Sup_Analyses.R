@@ -90,7 +90,10 @@ for(i in 1:length(DF)){
   # Avancment of the analyses.
   print(paste("done", i))
 }
+
 # save(res, file = "data/figure_1.rda")
+
+pdf(file = "figures/figure_1_supervised.pdf", width = 12.5, height = 3.5)
 load("data/figure_1.rda")
 color = LaCroixColoR::lacroix_palette(type = "paired")[c(2, 4, 6, 8, 12)]
 
@@ -98,8 +101,8 @@ layout(matrix(c(1,2,3), nrow=1))
 par(mar=c(5,5,4,2))
 at.bx <- c(0.6, 0.8, 1, 1.2)
 
-### FIGURE I
-boxplot(res[[1]][[1]], axes=F, col=color[1], boxwex=0.4, xlim = c(0.5, 4.5),
+### FIGURE G
+boxplot(res[[1]][[1]], axes = F, col = color[1], boxwex = 0.4, xlim = c(0.5, 4.5),
         ylim=c(0.5,1), ylab="AUC-ROC", main="Predictive performance", at = at.bx[1]:3.6)
 for(i in 2:4){
   boxplot(res[[i]][[1]], axes = F, col = color[i],
@@ -107,16 +110,16 @@ for(i in 2:4){
 }
 axis(1, 1:4,labels=F)
 axis(2)
-text(1:4, y=0.43, c("GBM","RF", "LASSO", "PLS"), xpd=NA, srt=60)
+text(1:4, y = 0.43, c("GBM","RF", "LASSO", "PLS"), xpd=NA, srt=60)
 legend("bottomleft", legend=c("Rel. ab.","CLR", "r-CLR","Abs./pres."), fill = color, 
        bty='n', cex=1)
 
-### FIGURE J
-boxplot(res[[1]][[2]], axes=F, col=color[1], boxwex=0.4, xlim = c(0.5, 4.5),
-        ylim=c(0.5,1), ylab="Abundances (log scale) of the\n20 most important species", 
+### FIGURE H
+boxplot(log(res[[1]][[2]]), axes=F, col=color[1], boxwex=0.4, xlim = c(0.5, 4.5),
+        ylim = c(-15, 0), ylab="Abundances (log scale) of the\n20 most important species", 
         main="Important species defined by models", at = at.bx[1]:3.6)
 for(i in 2:4){
-  boxplot(res[[i]][[2]], axes = F, col = color[i],
+  boxplot(log(res[[i]][[2]]), axes = F, col = color[i],
           cex.main = 0.8, boxwex = 0.4,add=T, at = at.bx[i]:4.2)
 }
 axis(1, 1:4, labels=F)
@@ -125,11 +128,16 @@ text(1:4, y=-17, c("GBM","RF", "LASSO", "PLS"), xpd=NA, srt=60)
 legend("bottomleft", legend=c("Rel. ab.","CLR", "r-CLR","Abs./pres."), fill = color, 
        bty='n', cex=1)
 
-### FIGURE K
-rf = randomForest::randomForest(Class ~ ., data = x)
-plot(log(colMeans(as.matrix(for.next))), log(rf$importance), cex=0.5, xlab="Relative Abundance of species\n(log-scale)", ylab="Importance of the species\nin the RF model",
-     col=color[1], pch = 3,ylim=c(-8,2), main="Relation between species abundance and\ntheir importance in the RF model.")
+### FIGURE I
+x = data.frame(t(apply(data$PRJEB1220$count, 2, function(x) x/sum(x))))
+rf = randomForest::randomForest(Y ~ ., data = x)
+
+plot(log(colMeans(as.matrix(x))), log(rf$importance), cex=0.5, xlab="Relative Abundance of species\n(log-scale)", 
+     ylab = "Importance of the species\nin the RF model", col = color[1], pch = 3, ylim = c(-8,2), 
+     main = "Relation between species abundance and\ntheir importance in the RF model.")
 w = which(rf$importance!=0)
-summary(lm(log(colMeans(as.matrix(for.next)))[w]~log(rf$importance)[w]))
-abline(coef(lm(log(rf$importance)[w]~log(colMeans(as.matrix(for.next)))[w])))
-legend("bottom", legend=c(expression(paste("r = 0.31 ; ", r^2," = 0.56, p < 0.001"))),cex=1, bty="n")
+summary(lm(log(colMeans(as.matrix(x)))[w]~log(rf$importance)[w]))
+abline(coef(lm(log(rf$importance)[w]~log(colMeans(as.matrix(x)))[w])))
+legend("bottom", legend=c(expression(paste(r^2," = 0.53, p < 0.001"))),cex=1, bty="n")
+
+dev.off()

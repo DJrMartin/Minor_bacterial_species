@@ -8,6 +8,7 @@ out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NUL
   res.imp.R = res.imp.X = NULL
   # cross validation
   for(cv in 1:cv){
+    
     intraining <- caret::createDataPartition(Y, p = p, list = F)
     # Target variable
     y_train = Y[intraining]
@@ -56,7 +57,7 @@ out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NUL
     metrics.X <- caret::confusionMatrix(pred.X.threshold, y_test, mode = "everything")
     metrics.X <- c(metrics.X$overall[1], metrics.X$byClass[c(1,2,7)], cor(as.numeric(y_test), as.numeric(pred.X.threshold)))
     ## AUROC for X.
-    res_X <- rbind(res_X, c(auc(y_test, pred.X), metrics.X))
+    res_X <- rbind(res_X, c(auc(roc(y_test, pred.X, direction = ">")), metrics.X))
     
     # Prediction on Y from Residuals
     rf_R = randomForest::randomForest(y_train~., data=residuals.X[intraining,], ntree = ntree, maxnodes = maxnodes, mtry = mtry)
@@ -67,7 +68,7 @@ out_of_bag_prediction <- function(X, Y, transformed = FALSE, X_transformed = NUL
     metrics.R <- caret::confusionMatrix(pred.R.threshold, y_test,  mode = "everything")
     metrics.R <- c(metrics.R$overall[1], metrics.R$byClass[c(1,2,7)], cor(as.numeric(y_test), as.numeric(pred.R.threshold)))
     ## AUROC for r.
-    res_R <- rbind(res_R, c(auc(y_test, pred.R), metrics.R))
+    res_R <- rbind(res_R, c(auc(roc(y_test, pred.R, direction = ">")), metrics.R))
     
     # IMPORTANCE
     # Importance in X or X_transformed

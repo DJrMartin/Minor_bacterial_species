@@ -3,7 +3,6 @@ rm(list=ls())
 ### Packages.
 packages <- readLines("requirements.txt")
 invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
-source(file = "functions/robust_CLR.R")
 source(file = "functions/composition.R")
 
 load("data/data.rda")
@@ -22,7 +21,7 @@ latent_k.col <- as.character(factor(latent_k.BC, levels(as.factor(latent_k.BC)),
 Y <- as.factor(data$PRJEB1220$data$disease)
 Y_col = as.character(factor(Y, c("Irritable Bowel Syndrome", "Health"), c("#7F00FF70","#00640070")))
 
-pdf(file = "figures/figure_1_x.pdf", width = 12.5, height = 4)
+pdf(file = "figures/figure_1_x.pdf", width = 12.5, height = 3.5)
 layout(matrix(c(1,1,2,3,3,4,4,
                 1,1,2,3,3,4,4), nrow=2, byrow = T))
 ### First part of the figure, describing the enterotypes and the PCoA. ============================================
@@ -49,7 +48,7 @@ for(i in 1:k){
   res.per.group <- cbind(res.per.group, colMeans(res.genus[which(latent_k.BC==i),]))
 }
 
-w.b <- which(apply(res.per.group, 1, var)>0.00005) # select the most expressed genus.
+w.b <- which(apply(res.per.group, 1, var)>0.0001) # select the most expressed genus.
 length(w.b)
 
 composition.genus = res.per.group[w.b,]
@@ -85,14 +84,6 @@ dev.off()
 # Fourth part of the figure, describing the most important species. ============================================ 
 # varImpPlot(rf, n=10)
 
-## LEGENDS
-par(mar=c(0,0,0,0))
-plot.new()
-legend("center",legend=rownames(data), title="Genus of microbiome composition",
-       fill=yarrr::piratepal("info2"), ncol=1, bty="n", cex=0.7, title.adj =0.)
-legend("bottomright", legend=rep("",3), pch=rep(1,3), pt.cex=c(1,3,5), ncol=4, bty="n",
-       title="Species' importance to define \n latent sample classes", title.cex=0.5)
-
 # ALTERNATIVE CLUSTERING =================================================================================
 k = 2 # number of alternative clustering
 ## transformed data
@@ -101,27 +92,29 @@ x.unifrac = picante::unifrac(X, genus.compo(X, data$`Martin et al.`$tree)[[2]])
 x.rclr = vegan::vegdist(X, method = "robust.aitchison")
 x.pa = vegan::vegdist(X>0, method = "jaccard")
 
-NAMES <- c("clr", "Unifrac", "rclr", "Pres.abs")
+NAMES <- c("clr", "Unweighted Unifrac", "rclr", "Pres.abs")
 DF = list(x.clr, x.unifrac, x.rclr, x.pa)
 
 for(i in 1:length(DF)){
-  pdf(file = paste0("figures/figure_1_", NAMES[i], ".pdf"), width = 12.5, height = 4)
+  pdf(file = paste0("figures/figure_1_", NAMES[i], ".pdf"), width = 12.5, height = 3.5)
   layout(matrix(c(1,1,2,3,3,4,4,
                   1,1,2,3,3,4,4), nrow=2, byrow = T))
   
   # PART 1 ================================================
   par(mar=c(4,4,2,2))
   X.Y = ape::pcoa(DF[[i]])$vectors
-  latent_k <- as.factor(cutree(hclust(DF[[i]], method = "ward.D"), 2))
-  latent_k.col <- as.character(factor(latent_k, levels(as.factor(latent_k)), piratepal(palette = "pony")[c(4:5)]))
+  latent_k <- as.factor(cutree(hclust(DF[[i]], method = "ward.D2"), 2))
   
   Z_for_correction = latent_k
-  if(diff(table(data.frame(latent_k,Y))[,2])<0){latent_k[Z_for_correction==1]=2;latent_k[Z_for_correction==2]=1}
+  if(diff(table(data.frame(latent_k, Y))[,2])<0){latent_k[Z_for_correction==1] = 2 ; latent_k[Z_for_correction==2] = 1}
+  latent_k.col <- as.character(factor(latent_k, levels(as.factor(latent_k)), piratepal(palette = "pony")[c(4:5)]))
+  
+  table(data.frame(latent_k.col, Y))
   # Projection de l'ensemble des études.
-  plot(X.Y, xlab="PCo1", ylab="PCo2", pch=16, col=Y_col,axes = FALSE)
-  legend("bottomright", legend=c("IBD" , "HLT"), fill=unique(Y_col), bty="n", cex=0.8)
-  unique(Y_col)
+  plot(X.Y, xlab="PCo1", ylab="PCo2", pch=16, col = Y_col, axes = FALSE)
+  legend("bottomright", legend=c("IBD" , "HLT"), fill = unique(Y_col), bty="n", cex=0.8)
   title(paste0("PCoA - ", NAMES[i]))
+  
   for (i in unique(latent_k.col)){
     mu <- colMeans(X.Y[which(latent_k.col==i),1:2])
     Sigma <- cov(X.Y[which(latent_k.col==i),1:2]) 
@@ -154,7 +147,7 @@ for(i in 1:length(DF)){
           main='Gut microbiota composition',  border=NA)
   
   # PART 3 ================================================
-  rf <- randomForest(latent_k~., data=X)
+  rf <- randomForest(latent_k~., data = X)
   rf$importance
   plot(log(colMeans(X)), log(apply(X,2, var)), 
        cex = rf$importance/2, axes = FALSE, main = "Importance of each species on clustering",
@@ -162,8 +155,24 @@ for(i in 1:length(DF)){
        xlab = "Species' abundances (log scale)", ylab = "Species' variability (log scale)")
   axis(1)
   axis(2)
-  # varImpPlot(rf, n=10)
-  # legend("bottomright", legend=rep("",3), pch=rep(1,3), pt.cex=c(1,3,5), ncol=4, bty="n",
-  #        title="Species' importance to define \n latent sample classes", title.cex=0.5)
+  
   dev.off()
 }
+
+for(i in 1:length(DF)){
+  pdf(file = paste0("figures/figure_1_varImp_", NAMES[i], ".pdf"), width = 5, height = 3.5)
+  latent_k <- as.factor(cutree(hclust(DF[[i]], method = "ward.D2"), 2))
+  rf <- randomForest(latent_k~., data = X)
+  varImpPlot(rf, n=10)
+  dev.off()
+}
+
+## LEGENDS
+pdf(file = paste0("figures/figure_1_legend.pdf"), width = 12.5, height = 3.5)
+par(mar=c(0,0,0,0))
+plot.new()
+legend("center",legend = rownames(composition.genus), title="Genus of microbiome composition",
+       fill=yarrr::piratepal("info2"), ncol = 5, bty = "n", cex = 0.7, title.adj = 0)
+dev.off()
+# legend("bottomright", legend=rep("",3), pch=rep(1,3), pt.cex=c(1,3,5), ncol=4, bty="n",
+#        title="Species' importance to define \n latent sample classes", title.cex=0.5)

@@ -1,7 +1,7 @@
 rm(list=ls())
 
 ### Packages.
-packages <- readLines("requirements")
+packages <- readLines("requirements.txt")
 invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
 ### data ================
 load("data/data.rda")
@@ -42,15 +42,16 @@ tss.G <- data.frame(tss.G)
 ### Out-of-sampling
 n <- nrow(tss_data)
 p <- ncol(tss_data)
+
 k = 3
-n.CV <- 20
+n.CV <- 10
 
 roc.r = roc.CoDa = c()
 imp.r = imp.coda = c()
 inter.r = inter.coda =c()
 set.seed(1)
 for(i in 1:n.CV){
-  intraining <- caret::createDataPartition(curated.class, p=0.8, list = F)
+  intraining <- caret::createDataPartition(curated.class, p=0.7, list = F)
   TRAIN <- tss_data[intraining,]
   TEST <- tss_data[-intraining,]
   
@@ -60,15 +61,15 @@ for(i in 1:n.CV){
   
   # Residuals train
   TRAIN.R <- data.frame((model<-lm(as.matrix(tss_data[intraining,])~0+k_est[intraining]))$residuals)
-  # TRAIN.R <- data.frame((model<-lm(as.matrix(TRAIN)~k_est))$residuals)
-  # TEST.R <- data.frame((model<-lm(as.matrix(TEST)~k_est.test))$residuals)
+  
+  ## out-of-bag
   TEST.R = TEST
   for(j in unique(k_est)){
-    TEST.R[which(k_est[-intraining]==j),]=scale(TEST[which(k_est[-intraining]==j),],
+    TEST.R[which(k_est[-intraining]==j),] = scale(TEST[which(k_est[-intraining]==j),],
                                                 center = model$coefficients[1,], scale=F)
   }
-  rf.r <- randomForest(curated.class[intraining]~., TRAIN.R, maxnodes = 5, mtry = 20, ntree = 2000)
-  rf.CoDa <- randomForest(curated.class[intraining]~., TRAIN, maxnodes = 5, mtry = 20, ntree = 2000)
+  rf.r <- randomForest(curated.class[intraining]~., TRAIN.R, maxnodes = 5, mtry = 25, ntree = 1500)
+  rf.CoDa <- randomForest(curated.class[intraining]~., TRAIN, maxnodes = 5, mtry = 25, ntree = 1500)
   
   imp.r <- cbind(imp.r, rf.r$importance)
   imp.coda <- cbind(imp.coda, rf.CoDa$importance)
@@ -115,7 +116,7 @@ layout(matrix(c(1,2), nrow=1, byrow = T))
 ## PANEL B
 par(mar=c(4,5,3,2))
 boxplot(roc.CoDa, roc.r, axes=F, ylim=c(0.8, 1.03), main = "Predictive performances",
-        ylab='AUC-ROC (cross-validations with\n80% of samples in the train set)', xlab="", col=color)
+        ylab='AUC-ROC (cross-validations with\n70% of samples in the train set)', xlab="", col=color)
 abline(h=0.5, lty=2)
 box()
 axis(2)

@@ -3,7 +3,6 @@ rm(list=ls())
 ### Packages.
 packages <- readLines("requirements.txt")
 invisible(lapply(packages, function(pkg){library(pkg, character.only = TRUE)}))
-source(file = "functions/robust_CLR.R")
 
 ### data ================
 load("data/data.rda")
@@ -28,7 +27,7 @@ for (i in 1:6){
 ### DATA FRAME ================
 x_bray <- (vegan::vegdist(t(X)))
 x_clr <- (dist(compositions::clr(t(X))))
-x_rclr <- dist(rclr(t(X)))
+x_rclr <- dist(vegan::decostand(t(X), "rclr"))
 x_unifrac <- (picante::unifrac(t(X), filt_tree))
 x_PA <- (vegan::vegdist(t(X>0)))
 
@@ -40,7 +39,7 @@ R = data.frame(mod$residuals)
 x_R <- (dist(R))
 
 DF <- list(x_bray, x_clr, x_rclr, x_PA, x_unifrac ,x_R)
-names.method <- c("Bray-Curtis", "CLR", "rCLR", "Pres/abs.", "Unifrac", "Guided Transformation")
+names.method <- c("Bray-Curtis", "CLR", "rCLR", "Unweighted Unifrac",  "Pres/abs.", "Guided Transformation")
 ##########################################################
 ################ FIGURE S3 ###############################
 ##########################################################
@@ -53,9 +52,7 @@ layout(matrix(c(1,1,1,2,3,3,3,4,5,5,5,6,
                 7,7,7,8,9,9,9,10,11,11,11,12), ncol=12, byrow = T))
 for(i in 1:6){
   par(mar=c(4,6,3,1))
-  if(i == 3){
-    x.y <- rPCA(DF[[i]])$scores
-  }else{x.y <- ape::pcoa(DF[[i]])$vectors}
+  x.y <- ape::pcoa(DF[[i]])$vectors
   Z2 <- cutree(hclust(DF[[i]], method = "ward.D"), 2)
   plot(x.y, col=as.character(Y_col), pch=16, ylim=c(min(x.y[,2]), max(x.y[,2])*1.2),
        xlab="PCo1", ylab="PCo2", main=names.method[i])
