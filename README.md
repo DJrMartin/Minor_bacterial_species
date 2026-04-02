@@ -104,7 +104,7 @@ This repository is made available under the [MIT License](LICENSE).
 
 If you use this resource in your research, please cite it as:
 
-> [Martin D. et al.] *A conceptual framework for revealing minor bacterial species in microbiome data through guided data transformation*. BioRxiv, [2025].
+> [Martin D. et al.] *A conceptual framework for revealing rare bacterial species in the gut microbiome through guided data transformation: Beyond enterotypes*. Methods in Ecology and Evolution (17), [2025].
 
 ## Contact
 
